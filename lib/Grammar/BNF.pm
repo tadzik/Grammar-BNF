@@ -1,3 +1,5 @@
+my class Actions { ... }
+
 grammar Grammar::BNF {
     token TOP {
         \s* <rule>+ \s*
@@ -9,6 +11,10 @@ grammar Grammar::BNF {
 
     token opt-ws {
         \h*
+    }
+
+    token rule-name {
+        <-[>]>+
     }
 
     token expression {
@@ -31,7 +37,46 @@ grammar Grammar::BNF {
         '"' <-["]>* '"' | "'" <-[']>* "'"
     }
 
-    token rule-name {
-        <-[>]>+
+    method generate($source, :$name = 'BNFGrammar') {
+        my $actions = Actions.new(:$name);
+        my $ret = self.new.parse($source, :$actions).ast;
+        return $ret.WHAT;
+    }
+}
+
+my class Actions {
+    has $.name = 'BNFGrammar';
+    method TOP($/) {
+        my $grmr := Metamodel::GrammarHOW.new_type(:$.name);
+        $grmr.^add_method('TOP', EVAL 'token { <' ~ $<rule>[0].ast.key ~ '> }');
+        for $<rule>.map(*.ast) -> $rule {
+            $grmr.^add_method($rule.key, nqp::decont($rule.value));
+        }
+        $grmr.^compose;
+        make $grmr;
+    }
+
+    method rule($/) {
+        make $<rule-name>.ast => $<expression>.ast;
+    }
+
+    method rule-name($/) {
+        make ~$/;
+    }
+
+    method expression($/) {
+        make EVAL 'token { [ ' ~ $<list>.map(*.ast).join(' | ') ~ ' ] }';
+    }
+
+    method list($/) {
+        make $<term>.map(*.ast).join(' ');
+    }
+
+    method term($/) {
+        make ~$/;
+    }
+
+    method literal($/) {
+        make ~$/;
     }
 }
