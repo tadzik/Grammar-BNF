@@ -50,7 +50,7 @@ my class Actions {
         my $grmr := Metamodel::GrammarHOW.new_type(:$.name);
         $grmr.^add_method('TOP', EVAL 'token { <' ~ $<rule>[0].ast.key ~ '> }');
         for $<rule>.map(*.ast) -> $rule {
-            $grmr.^add_method($rule.key, nqp::decont($rule.value));
+            $grmr.^add_method($rule.key, $rule.value);
         }
         $grmr.^compose;
         make $grmr;
