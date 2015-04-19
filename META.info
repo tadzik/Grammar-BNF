@@ -1,0 +1,18 @@
+{
+  "perl" : "v6",
+  "name" : "Grammar::BNF",
+  "description" : "Parse BNF grammars and generate Perl 6 grammars from them",
+  "version" : "v0.1.0",
+  "build-depends" : [ ],
+  "test-depends" : [
+    "nqp",
+    "Test"
+  ],
+  "depends" : [ ],
+  "provides" : {
+      "Grammar::BNF" : "lib/Grammar/BNF.pm"
+  },
+  "support" : {
+    "source" : "git://github.com/tadzik/Grammar-BNF.git"
+  }
+}
