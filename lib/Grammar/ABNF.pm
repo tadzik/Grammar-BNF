@@ -25,7 +25,6 @@ grammar Grammar::ABNF {
 
     # This is not in the RFC but helps keep things DRY
     token name {
-        # TODO: if the uppercase rule exists use it.
         :i (<+alpha><+alnum +[-]>+)
     }
 
@@ -119,7 +118,7 @@ grammar Grammar::ABNF {
     token CTL         { <[\x00..\x1f] + [\x7f]> }
     token DIGIT       { <[\x30..\x39]> }
     token DQUOTE      { \x22 }
-    token HEXDIG      { <+ DIGIT + [\x41..\x5a] + [\x61..\x7a]> }
+    token HEXDIG      { <+ DIGIT + [\x41..\x46] + [\x61..\x66]> }
     token HTAB        { \x09 }
     token LWSP        { [ <.WSP> | <.CRLF> <.WSP> ]* }
     token LF          { \x0a }
@@ -127,6 +126,31 @@ grammar Grammar::ABNF {
     token SP          { \x20 }
     token VCHAR       { <[\x21..\x7e]> }
     token WSP         { <+SP + HTAB> }
+
+    # ABNF rule names are case insensitive.  Mostly inside this class
+    # we take care of that in the rules, but the generated class will
+    # need this and we might as well use it here too.
+    method FALLBACK (Grammar: Str $name, |c) {
+        # Break fallback loops
+        if $name eq "name" {
+            return self.^name;
+        }
+
+        # $name has to be sanitized a bit, but we cannot use <name>
+        # from above as it may recurse if it has been overridden.
+	my $cname = ~$name.lc;
+        $cname ~~ tr/\-/\_/;
+	my $m = self.^methods.map(*.name).grep(
+            {
+                my $rname = $_.lc;
+                $rname ~~ tr/\-/\_/;
+	        $rname eq $cname
+	    })[0];
+	die X::Method::NotFound.new(
+            :method($name) :typename(self.^name) :!private
+        ) unless $m;
+	self."$m"(|c);
+    }
 
     # Provide a parse with defaults and also define our per-parse scope.
     method parse(|c) {
@@ -144,7 +168,6 @@ grammar Grammar::ABNF {
         fail("parse *of* an ABNF grammar definition failed.") unless $res;
 	return $res.ast;
     }
-
 }
 
 my class ABNF-Actions {
@@ -162,6 +185,7 @@ my class ABNF-Actions {
             $r.set_name($rule.key);
             $grmr.^add_method($rule.key, $r);
         }
+	$grmr.^add_method("FALLBACK", Grammar::ABNF.^find_method('FALLBACK'));
         $grmr.^compose;
         make $grmr;
     }
@@ -184,7 +208,12 @@ my class ABNF-Actions {
     }
 
     method rulename($/) {
-        make $/<name>.lc
+        my $n = ~$/<name>;
+        $n = $n.lc;
+        # Try to paper over the fact that perl6 rulenames cannot contain
+        # a hyphen followed by a decimal or at the end.
+        $n = $n.split(/ \- <.before [ \d | $ ]> /).join("_");
+        make $n;
     }
 
     method alternation($/) {
@@ -212,7 +241,10 @@ my class ABNF-Actions {
     method element($/) {
         # Only one of these will exist
         if $/<rulename> {
-            make "<" ~ $/<rulename>.ast ~ ">";
+            # Try to paper over the fact that perl6 rulenames cannot contain
+            # a hyphen followed by a decimal or at the end.
+            my $rn = ~$/<rulename>.split(/\-<.before [ \d | $ ]>/).join("_");
+            make "<$rn>";
 	}
         else {
             make $/<group option char-val
@@ -240,7 +272,12 @@ my class ABNF-Actions {
         # would cause trouble here.  Really we need to use the encoding
         # of the source and re-encode it.  But it will be 8-bit for most uses,
         # so deal with it later.
-        make "[" ~  (~$/[0]).ords.fmt(" \\x%x") ~ " ]";
+        make "[ " ~
+             (~$/[0].comb.map({ "<[" ~
+                                ($_.uc,$_.lc).unique».ords.fmt('\x%x', ' ')
+                                ~ "]>"
+                              }).join)
+              ~ " ]";
     }
 
     method num-val($/) {
@@ -276,14 +313,12 @@ my class ABNF-Actions {
 
     method prose-val($/) {
         make qq:to<EOCODE>;
-        \{
-           X::NYI.new(:feature(\$/[0].fmt(Q:to<EOERR>) ~ 'Such a mixin')).throw
-        \}
+        \{X::NYI.new(:feature(｢$/[0]｣.fmt(Q:to<ERR>) ~ 'Such a mixin')).throw\}
             This ABNF Grammar requires you to mix in custom code to do
             the following:
                 %s
             ...which you may have to write yourself.
-            EOERR
+            ERR
         EOCODE
     }
 }
