@@ -139,11 +139,11 @@ grammar Grammar::ABNF {
         # $name has to be sanitized a bit, but we cannot use <name>
         # from above as it may recurse if it has been overridden.
 	my $cname = ~$name.lc;
-        $cname ~~ tr/\-/\_/;
+        $cname ~~ tr/\-/_/;
 	my $m = self.^methods.map(*.name).grep(
             {
                 my $rname = $_.lc;
-                $rname ~~ tr/\-/\_/;
+                $rname ~~ tr/\-/_/;
 	        $rname eq $cname
 	    })[0];
 	die X::Method::NotFound.new(
