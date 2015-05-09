@@ -11,7 +11,7 @@
   "source-url" : "git://github.com/tadzik/Grammar-BNF.git",
   "depends" : [ ],
   "provides" : {
-      "Grammar::BNF" : "lib/Grammar/BNF.pm"
+      "Grammar::BNF" : "lib/Grammar/BNF.pm",
       "Grammar::ABNF" : "lib/Grammar/ABNF.pm"
   },
   "support" : {
