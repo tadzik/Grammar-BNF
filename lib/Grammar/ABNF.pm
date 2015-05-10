@@ -238,7 +238,7 @@ grammar Grammar::ABNF is Grammar::ABNF::Core {
     method generate(|c) {
         my $res = self.parse(|c);
         fail("parse *of* an ABNF grammar definition failed.") unless $res;
-	return $res.ast;
+	return $res.made;
     }
 }
 
@@ -269,8 +269,8 @@ my class ABNF-Actions {
     }
 
     method rule($/) {
-        my $rulename = $/<rulename>.ast;
-        my $ruleval = $/<elements><alternation>.ast;
+        my $rulename = $/<rulename>.made;
+        my $ruleval = $/<elements><alternation>.made;
         if (%*rules{$rulename}:exists) {
             if $/<defined-as> eq '=' {
                 X.Redeclaration.new(:symbol($rulename)
@@ -295,15 +295,15 @@ my class ABNF-Actions {
     }
 
     method alternation($/) {
-        make join(" | ", $/<concatenation>[]».ast)
+        make join(" | ", $/<concatenation>[]».made)
     }
 
     method concatenation($/) {
-        make join(" ", $/<repetition>[]».ast)
+        make join(" ", $/<repetition>[]».made)
     }
 
     method repetition($/) {
-        make $/<element>.ast unless $/<repeat>.defined;
+        make $/<element>.made unless $/<repeat>.defined;
         my $repeat = '';
 	if $/<repeat><star> {
             my $min = $/<repeat><min> // 0;
@@ -313,7 +313,7 @@ my class ABNF-Actions {
 	elsif $/<repeat><min> {
             $repeat ~= '**' ~ $/<repeat><min>;
 	}
-        make "[[ " ~ $/<element>.ast ~ " ]" ~ "$repeat ]";
+        make "[[ " ~ $/<element>.made ~ " ]" ~ "$repeat ]";
     }
 
     method element($/) {
@@ -321,21 +321,22 @@ my class ABNF-Actions {
         if $/<rulename> {
             # Try to paper over the fact that perl6 rulenames cannot contain
             # a hyphen followed by a decimal or at the end.
-            my $rn = ~$/<rulename>.split(/\-<.before [ \d | $ ]>/).join("_");
+            my $rn =
+                ~$/<rulename>.made.split(/\-<.before [ \d | $ ]>/).join("_");
             make "<$rn>";
 	}
         else {
             make $/<group option char-val
-                    num-val prose-val>.first(*.defined).ast;
+                    num-val prose-val>.first(*.defined).made;
         }
     }
 
     method group($/) {
-        make "[ " ~ $/<alternation>.ast ~ " ]";
+        make "[ " ~ $/<alternation>.made ~ " ]";
     }
 
     method option($/) {
-        make "[ " ~ $/<alternation>.ast ~ " ]?";
+        make "[ " ~ $/<alternation>.made ~ " ]?";
     }
 
     method char-val($/) {
@@ -360,7 +361,7 @@ my class ABNF-Actions {
 
     method num-val($/) {
         # Only one of these will exist
-        make $/<bin-val dec-val hex-val>.first(*.defined).ast;
+        make $/<bin-val dec-val hex-val>.first(*.defined).made;
     }
 
     # For all the num-vals, the RFC does not put limits on the number of

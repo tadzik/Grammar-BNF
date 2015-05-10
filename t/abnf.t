@@ -5,7 +5,7 @@ use lib './lib';
 
 use Test;
 
-plan 26;
+plan 27;
 
 use Grammar::ABNF;
 
@@ -45,7 +45,18 @@ for @simpletests[]:kv -> $c, $p (:key($g), :value($i)) {
     ok $a.parse($i), "Simple test grammar #$c parses material";
 }
 
-# Some grammars from RFCS.
+# Tests for corner cases and spec glitches
+
+# Technically legal?  We allow it.  Section 2.1 says this is "typically
+# restricted" to use within prose but does not give an example where it is
+# needed inside an actual ABNF rule, and the ABNF-of-ABNF provided will not
+# parse this.  But the "typically" weasel word forces us to allow it.
+# Also ABNF-of-ABNF does not allow it within <prose-val> so... WTH dudes.
+ok G.generate('foo = <bar>
+bar = 1*%x61-63
+').parse('abca'), "Optional angle brackets around rule names accepted.";
+
+# Test using some grammars from RFCS.
 my $rfc4466 = q:to<EOG>;
 ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
 BIT            =  "0" / "1"
