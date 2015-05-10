@@ -81,7 +81,9 @@ grammar Grammar::ABNF is Grammar::ABNF::Core {
 
     # Rule names are directly from RFC 5234 Section 4 for this section
     token rulelist {
-        [ <rule> | [ <.c-wsp>* <.c-nl> ] ]+
+#        [ <rule> | [ <.c-wsp>* <.c-nl> ] ]+
+# RFC 5234 errata ID 3076
+        [ <rule> | [ <.WSP>* <.c-nl> ] ]+
     }
 
     # Altered for indenting behavior
@@ -107,7 +109,9 @@ grammar Grammar::ABNF is Grammar::ABNF::Core {
     }
 
     token elements {
-        <alternation> <.c-wsp>*
+#        <alternation> <.c-wsp>*
+# RFC 5234 errata ID 2968
+        <alternation> <.WSP>*
     }
 
     # We just do this the way the RFC does, though unnecessary
