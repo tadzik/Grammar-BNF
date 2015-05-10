@@ -62,8 +62,11 @@ my class Actions {
     my sub guts($/, $rule) {
 	# Note: $*name can come from .parse above or from Slang::BNF
         my $grmr := Metamodel::GrammarHOW.new_type(:name($*name));
-        $grmr.^add_method('TOP', EVAL 'token { <' ~ $rule[0].ast.key ~ '> }');
+        my $top = EVAL 'token { <' ~ $rule[0].ast.key ~ '> }';
+        $grmr.^add_method('TOP', $top);
+        $top.set_name('TOP'); # Makes it appear in .^methods
         for $rule.map(*.ast) -> $rule {
+            $rule.value.set_name($rule.key);
             $grmr.^add_method($rule.key, $rule.value);
         }
         $grmr.^compose;
