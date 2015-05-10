@@ -1,6 +1,74 @@
 my class ABNF-Actions {...};
 
-grammar Grammar::ABNF {
+=NAME Grammar ABNF - Parse ABNF grammars and create Perl 6 Grammars from them
+
+=begin SYNOPSIS
+=begin code
+
+    use Grammar::ABNF;
+
+    my $g = Grammar::ABNF.parse(qq:to<END>, :name<MyGrammar>).made;
+    macaddr  = 5( octet [ ":" / "-" ] ) octet\r
+    octet    = 2HEXDIGIT\r
+    HEXDIGIT = %x30-39 / %x41-46 / %x61-66\r
+    END
+
+    $g.parse('02-BF-C0-00-02-01')<macaddr><octet>».Str.print; # 02BFC0000201
+
+=end code
+=end SYNOPSIS
+
+=begin DESCRIPTION
+
+The Grammar::ABNF module provides a Grammar named C<Grammar::ABNF>
+which parses ABNF grammar definitions.  It also provides a smaller
+grammar named C<Grammar::ABNF::Core> containing only the (mostly
+terminal) core ABNF rules.
+
+The module may also be used to produce working Perl6 C<Grammar>s from
+the parsed ABNF definitions.
+
+=end DESCRIPTION
+
+
+#|{ This grammar contains the core ABNF ruleset as defined in
+    RFC 5234 Appendix B.1.  The rule names are uppercase as they
+    appear in the RFC and must be used as such; this grammar
+    does not perform case folding.
+  }
+grammar Grammar::ABNF::Core {
+    # RFC 5234 Appendix B.1. "Core Rules"
+    token ALPHA       { <[\x41..\x5a] + [\x61..\x7a]> }
+    token BIT         { <[\x30 \x31]> }
+    token CHAR        { <[\x01..\x7f]> }
+    token CR          { \x0d }
+    token CRLF        { \x0d \x0a }
+    token CTL         { <[\x00..\x1f] + [\x7f]> }
+    token DIGIT       { <[\x30..\x39]> }
+    token DQUOTE      { \x22 }
+    token HEXDIG      { <+ DIGIT + [\x41..\x46] + [\x61..\x66]> }
+    token HTAB        { \x09 }
+    token LWSP        { [ <.WSP> | <.CRLF> <.WSP> ]* }
+    token LF          { \x0a }
+    token OCTET       { <[\x00..\xff]> }
+    token SP          { \x20 }
+    token VCHAR       { <[\x21..\x7e]> }
+    token WSP         { <+SP + HTAB> }
+}
+
+#|{ This grammar contains the full ABNF ruleset as defined in
+    RFC 5234.  The extra rules C<TOP>, C<main_syntax> and C<name>
+    are present and used for internal purposes.
+
+    Note that the C<CRLF> rule is strictly conformant.  If you
+    want to accept alternative newlines, you must override it
+    by defining a subclass.
+
+    Currently this module does not handle multi-line rules nor
+    even any whitespace prior to the rule on a line.  Support
+    for that is planned.  For now, use heredocs to de-indent.
+  }
+grammar Grammar::ABNF is Grammar::ABNF::Core {
 
     token TOP {
 # TODO deal with indentation and folded rules
@@ -110,28 +178,39 @@ grammar Grammar::ABNF {
         "<" (<[\x20..\x3D] + [\x3F..\x7E]>*) ">"
     }
 
-    # These should be in a separate grammar as they are often referenced.
-    # RFC 5234 Appendix B.1. "Core Rules"
-    token ALPHA       { <[\x41..\x5a] + [\x61..\x7a]> }
-    token BIT         { <[\x30 \x31]> }
-    token CHAR        { <[\x01..\x7f]> }
-    token CR          { \x0d }
-    token CRLF        { \x0d \x0a }
-    token CTL         { <[\x00..\x1f] + [\x7f]> }
-    token DIGIT       { <[\x30..\x39]> }
-    token DQUOTE      { \x22 }
-    token HEXDIG      { <+ DIGIT + [\x41..\x46] + [\x61..\x66]> }
-    token HTAB        { \x09 }
-    token LWSP        { [ <.WSP> | <.CRLF> <.WSP> ]* }
-    token LF          { \x0a }
-    token OCTET       { <[\x00..\xff]> }
-    token SP          { \x20 }
-    token VCHAR       { <[\x21..\x7e]> }
-    token WSP         { <+SP + HTAB> }
+    #|{ A custom C<.parse> method is provided.  By default, this
+        method will pull in a C<:actions> class which will create
+        a Perl 6 Grammar in the C<.made> attribute attached to any
+        successful C<Match>.  In addition, a type name for the created
+        Perl 6 Grammar may be provided with C<:name>.  This defaults
+        to C<'ABNF-Grammar'>.  It is advised that you provide your own.
 
-    # ABNF rule names are case insensitive.  Mostly inside this class
-    # we take care of that in the rules, but the generated class will
-    # need this and we might as well use it here too.
+        This method also sets up some internal state, so subgrammars
+        should be careful to properly wrap it when providing their
+        own C<.parse> method.
+      }
+    method parse(|c) {
+        my %*rules;
+	my @*ruleorder;
+        my $*indent;
+	my $*name = c<name> // 'ABNF-Grammar';
+	nextsame if (c<actions>);
+	nextwith(|c, :actions(ABNF-Actions));
+    }
+
+    #|{ ABNF rules may be used in a case-insensitive fashion,
+        though in Grammar::ABNF itself, they will present themselves
+        with the casing they have in the RFC under introspection.  A
+        C<FALLBACK> method is provided which performs case folding
+        where it cannot be part of the rules themselves.
+
+        This method will also be added to grammars created from
+        ABNF descriptions.  In that case, user-defined rule names
+        will present as lowercase under introspection.
+
+        In order to allow ABNF rules that are not legal Perl 6
+        identifiers, hypens and underscores will also be folded.
+      }
     method FALLBACK (Grammar: Str $name, |c) {
         # Break fallback loops
         if $name eq "name" {
@@ -151,17 +230,8 @@ grammar Grammar::ABNF {
 	die X::Method::NotFound.new(
             :method($name) :typename(self.^name) :!private
         ) unless $m;
+        # TODO: and self.^find_method($name) ~~ Regex; # or something
 	self."$m"(|c);
-    }
-
-    # Provide a parse with defaults and also define our per-parse scope.
-    method parse(|c) {
-        my %*rules;
-	my @*ruleorder;
-        my $*indent;
-	my $*name = c<name> // 'ABNF-Grammar';
-	nextsame if (c<actions>);
-	nextwith(|c, :actions(ABNF-Actions));
     }
 
     # We may want to rename this given jnthn's Grammar::Generative
@@ -338,3 +408,19 @@ grammar Grammar::ABNF::Slang is Grammar::ABNF {
 }
 # And we need this to be named precisely this, I think (?)
 class Grammar::ABNF::Slang-actions is ABNF-Actions { }
+
+=AUTHOR Brian S. Julin
+
+=COPYRIGHT Copyright (c) 2015 Brian S. Julin. All rights reserved.
+
+=begin LICENSE
+This program is free software; you can redistribute it and/or modify
+it under the terms of either the MIT license (as other files
+in this distribution may be) or the Perl Artistic License 2.0.
+=end LICENSE
+
+=begin REFERENCES
+=item "RFC 5234: Augmented BNF for Syntax Specifications: ABNF" (Crocker,Overall,THUS) L<https://tools.ietf.org/html/rfc5234>
+=end REFERENCES
+
+=SEE-ALSO C<perl6::(1)>
