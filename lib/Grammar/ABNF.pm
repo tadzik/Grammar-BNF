@@ -9,6 +9,8 @@ grammar Grammar::ABNF {
         <rulelist> \s*
     }
 
+    token main_syntax { <TOP> }
+
     # Rule names are directly from RFC 5234 Section 4 for this section
     token rulelist {
         [ <rule> | [ <.c-wsp>* <.c-nl> ] ]+
@@ -172,11 +174,9 @@ grammar Grammar::ABNF {
 
 my class ABNF-Actions {
 
-    method TOP($/) {
+    my sub guts($/) {
+        # Note: $*name can come from .parse above or from Slang::BNF
         my $grmr := Metamodel::GrammarHOW.new_type(:name($*name));
-        # When /<$f>/ and /<@f>/ are secure and reliable we might
-        # be able to avoid the EVALs.  Unless thay do not constant-fold,
-        # or remain impermeable to grabbing subrules from inside them.
         my $top = EVAL 'token { <' ~ @*ruleorder[0] ~ '> }';
         $top.set_name('TOP'); # There are two name slots IIRC.
         $grmr.^add_method('TOP', $top);
@@ -188,6 +188,14 @@ my class ABNF-Actions {
 	$grmr.^add_method("FALLBACK", Grammar::ABNF.^find_method('FALLBACK'));
         $grmr.^compose;
         make $grmr;
+    }
+
+    method TOP($/) {
+        make guts($/);
+    }
+
+    method main_syntax($/) {
+        make guts($/);
     }
 
     method rule($/) {
@@ -322,3 +330,11 @@ my class ABNF-Actions {
         EOCODE
     }
 }
+
+# Makes the slang version awesome by softening CRLF to match surrounding code
+# Maybe allow mixing in perl-style comments in the future
+grammar Grammar::ABNF::Slang is Grammar::ABNF {
+    rule CRLF { \n | $ }
+}
+# And we need this to be named precisely this, I think (?)
+class Grammar::ABNF::Slang-actions is ABNF-Actions { }

@@ -5,7 +5,7 @@ use lib './lib';
 
 use Test;
 
-plan 24;
+plan 26;
 
 use Grammar::ABNF;
 
@@ -378,3 +378,13 @@ for @simpletests[]:kv -> $c, $p (:key($g), :value($i)) {
     is $derived_gist, $direct_gist,
         "Derived grammar ($c) produces same results";
 }
+
+use Slang::ABNF;
+
+abnf-grammar A::C {
+foo = "bar"
+};
+
+ok(A::C.parse("bar"), "Parse succeeds");
+ok(!A::C.parse("far"), "Parse fails when it doesn't match");
+done();
