@@ -1,6 +1,7 @@
 #!/usr/bin/env perl6
-use Grammar::BNF;
 use Test;
+use lib './lib';
+use Grammar::BNF;
 
 my $t;
 
