@@ -13,7 +13,8 @@
   "provides" : {
       "Grammar::BNF"  : "lib/Grammar/BNF.pm",
       "Slang::BNF"    : "lib/Slang/BNF.pm",
-      "Grammar::ABNF" : "lib/Grammar/ABNF.pm"
+      "Grammar::ABNF" : "lib/Grammar/ABNF.pm",
+      "Slang::ABNF"    : "lib/Slang/ABNF.pm"
   },
   "support" : {
     "source" : "git://github.com/tadzik/Grammar-BNF.git"
