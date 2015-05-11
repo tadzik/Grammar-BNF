@@ -11,16 +11,16 @@ $t = q[
 ok Grammar::BNF.generate($t, name => 'test1').new.parse('bar');
 
 $t = q[
-<foo> ::= <bar>
-<bar> ::= "baz"
+<foo> ::= <bar'foo>
+<bar'foo> ::= "baz"
 ];
 ok Grammar::BNF.generate($t, name => 'test2').new.parse('baz');
 
 
 $t = q[
-<foo> ::= <bar> | <baz>
-<bar> ::= "bar" | <baz>
-<baz> ::= "buzz"
+<foo> ::= <bar> | <bar-z>
+<bar> ::= "bar" | <bar-z>
+<bar-z> ::= "buzz"
 ];
 ok Grammar::BNF.generate($t).new.parse('buzz');
 

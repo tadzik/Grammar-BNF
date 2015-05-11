@@ -19,7 +19,12 @@ grammar Grammar::BNF {
     }
 
     token rule-name {
-        <-[>]>+
+        # If we want something other than legal perl 6 identifiers,
+        # we would have to implement a FALLBACK.  BNF "specifications"
+        # diverge on what is a legal rule name but most expectations are
+        # covered by legal Perl 6 identifiers.  Care should be taken to
+        # shield from evaluation of metacharacters on a Perl 6 level.
+        <.ident>+ % [ <[\-\']> ]
     }
 
     token expression {
@@ -101,7 +106,8 @@ my class Actions {
     }
 
     method literal($/) {
-        make ~$/;
+        # Prevent evalaution of metachars at Perl 6 level
+        make ('[ ', ' ]').join(~$/.ords.fmt('\x%x',' '));
     }
 }
 
