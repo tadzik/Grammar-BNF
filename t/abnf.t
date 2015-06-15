@@ -11,7 +11,7 @@ use Grammar::ABNF;
 
 ok 1, 'We use Grammar::ABNF and we are still alive';
 
-lives_ok { grammar G is Grammar::ABNF { token CRLF { "\n" } } },
+lives-ok { grammar G is Grammar::ABNF { token CRLF { "\n" } } },
     'We subclassed Grammar::ABNF';
 
 my @simpletests = (
@@ -314,14 +314,14 @@ ok $rfc4466g.parse('EXAMINE INBOX', :rule<examine>),
  'Can parse an rfc4466 examine command';
 ok $rfc4466g.parse('FETCH 1 BODY[]', :rule<fetch>),
  'Can parse an rfc4466 fetch command';
-throws_like { $rfc4466g.parse('LOGIN MyUsername MyPassword', :rule<login>) },
+throws-like { $rfc4466g.parse('LOGIN MyUsername MyPassword', :rule<login>) },
 X::NYI, message => "This ABNF Grammar requires you to mix in custom code to do
 the following:
     any CHAR except atom-specials
 ...which you may have to write yourself.
 Such a mixin not yet implemented. Sorry. ";
 
-throws_like { $rfc4466g.parse("foo", :rule<fake-rule-name>) }, X::Method::NotFound;
+throws-like { $rfc4466g.parse("foo", :rule<fake-rule-name>) }, X::Method::NotFound;
 
 # Complex tests.
 
