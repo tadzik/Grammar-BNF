@@ -357,7 +357,7 @@ my class ABNF-Actions {
         # so deal with it later.
         make "[ " ~
              (~$/[0].comb.map({ "<[" ~
-                                ($_.uc,$_.lc).unique».ords.fmt('\x%x', ' ')
+                                ($_.uc,$_.lc).map({$_.ords}).fmt('\x%x', ' ')
                                 ~ "]>"
                               }).join)
               ~ " ]";
