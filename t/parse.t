@@ -59,4 +59,4 @@ $t = q[
 ];
 ok Grammar::BNF.new.parse($t);
 
-done;
+done-testing;

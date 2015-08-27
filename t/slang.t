@@ -8,4 +8,4 @@ bnf-grammar A::B {
 
 ok(A::B.parse("bar"), "Parse succeeds");
 ok(!A::B.parse("far"), "Parse fails when it doesn't match");
-done();
+done-testing();
