@@ -3,6 +3,8 @@ use Test;
 use lib './lib';
 use Grammar::BNF;
 
+plan 6;
+
 my $t;
 
 $t = q[
