@@ -398,4 +398,3 @@ foo = "bar"
 
 ok(A::C.parse("bar"), "Parse succeeds");
 ok(!A::C.parse("far"), "Parse fails when it doesn't match");
-done();
