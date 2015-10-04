@@ -22,7 +22,7 @@ sub EXPORT(|) {
         }
     }
     role Slang::ABNF::Actions {
-        method package_declarator:sym<abnf-grammar>(Mu $/ is rw) {
+        method package_declarator:sym<abnf-grammar>(Mu $/) {
             # Bits extracted from rakudo/src/Perl6/Grammar.nqp (package_def)
             my $longname := $*W.dissect_longname(lk($/,'longname'));
             my $outer := $*W.cur_lexpad();
