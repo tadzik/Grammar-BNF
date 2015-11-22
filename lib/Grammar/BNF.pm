@@ -50,8 +50,11 @@ grammar Grammar::BNF {
     # Provide a parse with defaults and also define our per-parse scope.
     method parse(|c) {
         my $*name = c<name> // 'BNFGrammar';
-        nextsame if (c<actions>);
-        nextwith(|c, :actions(Actions));
+        my %hmod = c.hash;
+        %hmod<name>:delete;
+        %hmod<actions> = Actions unless %hmod<actions>:exists;
+        my \cmod = \(|c.list, |%hmod);
+        nextwith(|cmod);
     }
 
     # We may want to rename this given jnthn's Grammar::Generative

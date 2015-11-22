@@ -195,11 +195,14 @@ grammar Grammar::ABNF is Grammar::ABNF::Core {
       }
     method parse(|c) {
         my %*rules;
-	my @*ruleorder;
+        my @*ruleorder;
         my $*indent;
-	my $*name = c<name> // 'ABNF-Grammar';
-	nextsame if (c<actions>);
-	nextwith(|c, :actions(ABNF-Actions));
+        my $*name = c<name> // 'ABNF-Grammar';
+        my %hmod = c.hash;
+        %hmod<name>:delete;
+        %hmod<actions> = ABNF-Actions unless %hmod<actions>:exists;
+        my \cmod = \(|c.list, |%hmod);
+        nextwith(|cmod);
     }
 
     #|{ ABNF rules may be used in a case-insensitive fashion,
