@@ -68,6 +68,7 @@ grammar Grammar::BNF {
 my class Actions {
 
     my sub guts($/, $rule) {
+        use MONKEY-SEE-NO-EVAL;
 	# Note: $*name can come from .parse above or from Slang::BNF
         my $grmr := Metamodel::GrammarHOW.new_type(:name($*name));
         my $top = EVAL 'token { <' ~ $rule[0].ast.key ~ '> }';
@@ -97,6 +98,7 @@ my class Actions {
     }
 
     method expression($/) {
+        use MONKEY-SEE-NO-EVAL;
         make EVAL 'token { [ ' ~ $<list>.map(*.ast).join(' | ') ~ ' ] }';
     }
 

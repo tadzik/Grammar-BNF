@@ -252,6 +252,7 @@ grammar Grammar::ABNF is Grammar::ABNF::Core {
 my class ABNF-Actions {
 
     my sub guts($/) {
+        use MONKEY-SEE-NO-EVAL;
         # Note: $*name can come from .parse above or from Slang::BNF
         my $grmr := Metamodel::GrammarHOW.new_type(:name($*name));
         my $top = EVAL 'token { <' ~ @*ruleorder[0] ~ '> }';
