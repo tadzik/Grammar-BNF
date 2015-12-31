@@ -8,7 +8,7 @@
     "nqp",
     "Test"
   ],
-  "source-url" : "git://github.com/tadzik/Grammar-BNF.git",
+  "source-url" : "https://github.com/tadzik/Grammar-BNF.git",
   "depends" : [ ],
   "provides" : {
       "Grammar::BNF"  : "lib/Grammar/BNF.pm",
@@ -17,6 +17,6 @@
       "Slang::ABNF"    : "lib/Slang/ABNF.pm"
   },
   "support" : {
-    "source" : "git://github.com/tadzik/Grammar-BNF.git"
+    "source" : "https://github.com/tadzik/Grammar-BNF.git"
   }
 }
