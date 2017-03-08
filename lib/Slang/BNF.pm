@@ -16,6 +16,7 @@ sub EXPORT(|) {
             \{
             <rules=.FOREIGN_LANG('Grammar::BNF', 'main_syntax')>
             \}
+            <.set_braid_from(self)>
         }
     }
     role Slang::BNF::Actions {
