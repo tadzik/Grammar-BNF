@@ -10,6 +10,7 @@ sub EXPORT(|) {
     }
     role Slang::BNF {
         rule package_declarator:sym<bnf-grammar> {
+            :my $*OUTERPACKAGE := self.package;
             <sym>
             :my $*name;
             <longname> { $*name := lk($/,'longname').Str }

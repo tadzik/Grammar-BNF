@@ -10,6 +10,7 @@ sub EXPORT(|) {
     }
     role Slang::ABNF {
         rule package_declarator:sym<abnf-grammar> {
+            :my $*OUTERPACKAGE := self.package;
             <sym>
             :my $*name;
 	    :my %*rules;
