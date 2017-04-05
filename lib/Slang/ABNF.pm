@@ -10,6 +10,7 @@ sub EXPORT(|) {
     }
     role Slang::ABNF {
         rule package_declarator:sym<abnf-grammar> {
+            :my $*OUTERPACKAGE := self.package;
             <sym>
             :my $*name;
 	    :my %*rules;
@@ -41,13 +42,25 @@ sub EXPORT(|) {
 
         }
     }
-    nqp::bindkey(%*LANG, 'MAIN',
-                 %*LANG<MAIN>.HOW.mixin(%*LANG<MAIN>, Slang::ABNF));
-    nqp::bindkey(%*LANG, 'MAIN-actions',
-                 %*LANG<MAIN-actions>.HOW.mixin(%*LANG<MAIN-actions>,
-                                                Slang::ABNF::Actions));
-    nqp::bindkey(%*LANG, 'Grammar::ABNF::Slang', Grammar::ABNF::Slang);
-    nqp::bindkey(%*LANG, 'Grammar::ABNF::Slang-actions',
-                 Grammar::ABNF::Slang-actions);
+
+    my Mu $MAIN-grammar := nqp::atkey(%*LANG, 'MAIN');
+    my $grammar := $MAIN-grammar.^mixin(Slang::ABNF);
+    my Mu $MAIN-actions := nqp::atkey(%*LANG, 'MAIN-actions');
+    my $actions := $MAIN-actions.^mixin(Slang::ABNF::Actions);
+
+    # old way
+    try {
+        nqp::bindkey(%*LANG, 'MAIN', $grammar);
+        nqp::bindkey(%*LANG, 'MAIN-actions', $actions);
+        nqp::bindkey(%*LANG, 'Grammar::ABNF::Slang',
+                     Grammar::ABNF::Slang);
+        nqp::bindkey(%*LANG, 'Grammar::ABNF::Slang-actions',
+                     Grammar::ABNF::Slang-actions);
+    }
+    # new way
+    try {
+        $*LANG.define_slang("MAIN", $grammar, $actions);
+        $*LANG.define_slang("Grammar::ABNF::Slang", Grammar::ABNF::Slang, Grammar::ABNF::Slang-actions );
+    }
     {}
 }

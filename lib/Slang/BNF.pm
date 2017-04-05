@@ -10,12 +10,14 @@ sub EXPORT(|) {
     }
     role Slang::BNF {
         rule package_declarator:sym<bnf-grammar> {
+            :my $*OUTERPACKAGE := self.package;
             <sym>
             :my $*name;
             <longname> { $*name := lk($/,'longname').Str }
             \{
             <rules=.FOREIGN_LANG('Grammar::BNF', 'main_syntax')>
             \}
+            <.set_braid_from(self)>
         }
     }
     role Slang::BNF::Actions {
@@ -37,9 +39,23 @@ sub EXPORT(|) {
             $/.'make'(QAST::IVal.new(:value(1)));
         }
     }
-    nqp::bindkey(%*LANG, 'MAIN', %*LANG<MAIN>.HOW.mixin(%*LANG<MAIN>, Slang::BNF));
-    nqp::bindkey(%*LANG, 'MAIN-actions', %*LANG<MAIN-actions>.HOW.mixin(%*LANG<MAIN-actions>, Slang::BNF::Actions));
-    nqp::bindkey(%*LANG, 'Grammar::BNF', Grammar::BNF);
-    nqp::bindkey(%*LANG, 'Grammar::BNF-actions', Grammar::BNF-actions);
+
+    my Mu $MAIN-grammar := nqp::atkey(%*LANG, 'MAIN');
+    my $grammar := $MAIN-grammar.^mixin(Slang::BNF);
+    my Mu $MAIN-actions := nqp::atkey(%*LANG, 'MAIN-actions');
+    my $actions := $MAIN-actions.^mixin(Slang::BNF::Actions);
+
+    # old way
+    try {
+        nqp::bindkey(%*LANG, 'MAIN', $grammar);
+        nqp::bindkey(%*LANG, 'MAIN-actions', $actions);
+        nqp::bindkey(%*LANG, 'Grammar::BNF', Grammar::BNF);
+        nqp::bindkey(%*LANG, 'Grammar::BNF-actions', Grammar::BNF-actions);
+    }
+    # new way
+    try {
+        $*LANG.define_slang("MAIN", $grammar, $actions);
+        $*LANG.define_slang("Grammar::BNF", Grammar::BNF, Grammar::BNF-actions);
+    }
     {}
 }
