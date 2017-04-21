@@ -5,7 +5,6 @@
   "version" : "v0.1.0",
   "build-depends" : [ ],
   "test-depends" : [
-    "nqp",
     "Test"
   ],
   "source-url" : "https://github.com/tadzik/Grammar-BNF.git",
