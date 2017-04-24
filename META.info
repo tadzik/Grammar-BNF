@@ -3,6 +3,7 @@
   "name" : "Grammar::BNF",
   "description" : "Parse BNF and ABNF grammars and generate Perl 6 grammars from them",
   "version" : "v0.1.0",
+  "license" : "MIT",
   "build-depends" : [ ],
   "test-depends" : [
     "Test"
