@@ -315,11 +315,11 @@ ok $rfc4466g.parse('EXAMINE INBOX', :rule<examine>),
 ok $rfc4466g.parse('FETCH 1 BODY[]', :rule<fetch>),
  'Can parse an rfc4466 fetch command';
 throws-like { $rfc4466g.parse('LOGIN MyUsername MyPassword', :rule<login>) },
-X::NYI, message => "This ABNF Grammar requires you to mix in custom code to do
-the following:
-    any CHAR except atom-specials
-...which you may have to write yourself.
-Such a mixin not yet implemented. Sorry. ";
+  X::NYI, message => /
+    "This ABNF Grammar requires you to mix in custom code" .+?
+    "any CHAR except atom-specials" .+?
+    "which you may have to write yourself"
+  /;
 
 throws-like { $rfc4466g.parse("foo", :rule<fake-rule-name>) }, X::Method::NotFound;
 
