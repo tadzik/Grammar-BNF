@@ -30,13 +30,13 @@ sub EXPORT(|) {
             # Locate any existing symbol. Note that it's only a match
             # with "my" if we already have a declaration in this scope.
             my $exists := 0;
-            my @name = $longname.type_name_parts('package name', :decl(1));
+            my $name := nqp::getattr($longname.type_name_parts('package name', :decl(1)), List, '$!reified');
             my $target_package :=
                 $longname && $longname.is_declared_in_global()
                 ?? $*GLOBALish
                 !! $*OUTERPACKAGE;
             my $*PACKAGE = lk($/,"rules").made();
-            $*W.install_package($/, @name, 'our', 'abnf-grammar',
+            $*W.install_package($/, $name, 'our', 'abnf-grammar',
                                 $target_package, $outer, $*PACKAGE);
             $/.'make'(QAST::IVal.new(:value(1)));
 
